@@ -4,6 +4,7 @@ date: 2023-08-14T21:07:07+00:00
 slug: "cross-site-scripting-xss-variants-and-examples"
 categories: ["Scripting", "Writeup"]
 draft: false
+thumbnail: "Screenshot-2023-08-16-205707-1024x538.png"
 ---
 All modern websites consist of at least 3 fundamental components: HTML, CSS, and JavaScript. HTML creates structure, CSS is used for styling, and JavaScript enables interactive user experiences through manipulation of the DOM (Document Object Model). JavaScript however, can also be used by malicious actors to access sensitive information on the client-side. One major category of web application vulnerabilities is known as cross-site scripting (XSS). This vulnerability occurs precisely due to any malicious user's ability to inject JS code into a vulnerable website. If proper security controls are not implemented, this vulnerability makes it possible for an attacker to read and steal an end-user's cookies and session information that otherwise should be private and confidential.
 

@@ -4,6 +4,7 @@ date: 2022-03-06T20:23:00+00:00
 slug: "memory-forensics-and-the-volatility-framework"
 categories: ["Research", "Writeup"]
 draft: false
+thumbnail: "Screenshot-2022-03-06-201610.png"
 ---
 In the world of digital forensics, we can envision data as belonging to two distinct categories. Those categories are either volatile, or non-volatile states of data (Mohanta, 2020). Volatile data includes random-access memory (RAM) that depends on a running power supply, whereas read-only memory (ROM) or data that is written to a hard disk is considered non-volatile. The readable contents of non-volatile data do not change upon power interruption. The industry standard open source tool I will explore this week to conduct memory forensics on traditional desktop endpoints has aptly been named Volatility.
 

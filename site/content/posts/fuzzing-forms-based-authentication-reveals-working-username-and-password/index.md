@@ -4,6 +4,7 @@ date: 2023-07-25T20:08:52+00:00
 slug: "fuzzing-forms-based-authentication-reveals-working-username-and-password"
 categories: ["Burp Suite", "Writeup"]
 draft: false
+thumbnail: "Screenshot-2023-05-30-195420.png"
 ---
 In this lab exploring HTML forms-based authentication, I use Burp Suite to fuzz a username of interest to discover a valid password combination. "Fuzzing" in the context of web application security means any automated attempt to inject a large number variables into any field that accepts user input. The tester then monitors the application for unexpected behavior or unusual results that may indicate the presence of a vulnerability. Possibilities for fuzzing input ranges from common usernames, passwords, URLs, sensitive data patterns, executable shell commands and SQLi payloads. [SecLists is a well-known repository](https://github.com/danielmiessler/SecLists) that maintains wordlists for each of these mentioned categories. The choice of which wordlist to use depends on the context of the input field and what category of vulnerability the tester suspects may exist within the application.
 
