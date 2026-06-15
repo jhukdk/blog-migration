@@ -24,6 +24,10 @@ crash.*.log
 # --- Python virtualenv (migration tooling) ---
 .venv/
 
+# --- Raw WordPress export (large input; converted output lives in /site) ---
+# Remove this line if you want the WXR export + uploads tracked for reproducibility.
+migration-source/
+
 # --- OS / editor cruft ---
 .DS_Store
 *.swp
