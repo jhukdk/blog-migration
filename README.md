@@ -71,6 +71,8 @@ keylessly via GitHub OIDC. Three non-secret repository **Variables** wire it up 
 ## Conventions & guardrails
 
 - Permalinks are preserved exactly as `/:year/:month/:day/:slug/` — SEO depends on it.
+- `www.jhuk.tech` 301-redirects to the apex `https://jhuk.tech` at the edge (a
+  CloudFront viewer-request function) to keep one canonical host.
 - The S3 content bucket stays **private**; CloudFront reads it via OAC only.
 - The CI IAM role is least-privilege: read/write on the content bucket and
   `cloudfront:CreateInvalidation` on the one distribution.
