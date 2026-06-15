@@ -14,7 +14,6 @@ Hello, world! My name is David J. Kim. I have worked full-time as a Solutions Ar
 
 I am passionate about safeguarding personal data - both my own and the companies I represent. I enjoy learning about constantly evolving new technologies and applying my skills to tackle complex business problems.
 
-This is a small-content-change I made to test the CI/CD pipeline upon PR into mainnn. 
 
 
 # Education and Certifications
