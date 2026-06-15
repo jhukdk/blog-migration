@@ -1,6 +1,6 @@
-# From Cpanel WordPress → AWS Cloudfront and S3
+# From WordPress Cpanel → AWS Cloudfront and S3
 
-This project migrates my personal WordPress blog at [jhuk.tech](https://jhuk.tech) to 
+This project documents migration of my personal WordPress blog at [jhuk.tech](https://jhuk.tech) to 
 a [Hugo](https://gohugo.io) static site hosted on **AWS S3 + CloudFront**, provisioned with 
 **Terraform** and deployed by **GitHub Actions**. All infrastructure is code; all content is Markdown.
 
