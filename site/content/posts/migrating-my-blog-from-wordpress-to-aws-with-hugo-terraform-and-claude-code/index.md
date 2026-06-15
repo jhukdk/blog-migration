@@ -43,11 +43,7 @@ I exported the old site to a WordPress WXR file and wrote a small Python script 
 
 Preserving each post's original `slug` and publish date means a URL like `/2026/03/05/using-azure-infrastructure.../` resolves to the same content it always did. The SEO value built up over years stays intact.
 
-![The migrated site rendered with the Congo theme — the same posts, now served as static files from CloudFront.](new-site-homepage.png)
-
 Every migrated post kept its formatting and its embedded screenshots, co-located in the page bundle rather than scattered across a `wp-content/uploads` tree.
-
-![A migrated post rendered at its original dated permalink — headings, the category tag, and an auto-generated table of contents all intact.](migrated-post-preserved.png)
 
 ## Pretty URLs at the Edge
 
