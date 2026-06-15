@@ -1,0 +1,29 @@
+# --- Terraform / infra secrets & state (never commit) ---
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+.terraform/
+crash.log
+crash.*.log
+
+# --- AWS credentials ---
+.aws/
+
+# --- Environment / secrets ---
+.env
+.env.*
+*.env
+*.pem
+
+# --- Hugo build artifacts ---
+/site/public/
+/site/resources/
+/site/.hugo_build.lock
+
+# --- Python virtualenv (migration tooling) ---
+.venv/
+
+# --- OS / editor cruft ---
+.DS_Store
+*.swp
