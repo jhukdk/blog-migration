@@ -1,0 +1,24 @@
+baseURL = "https://jhuk.tech/"
+title = "Jhuk Tech News"
+defaultContentLanguage = "en"
+
+# Ensure robots.txt is generated for SEO.
+enableRobotsTXT = true
+
+# Allow raw HTML in Markdown (WordPress imports often contain it).
+[outputs]
+  home = ["HTML", "RSS", "JSON"] # JSON output powers Congo's client-side search.
+  section = ["HTML", "RSS"]
+
+[taxonomies]
+  tag = "tags"
+  category = "categories"
+
+# SEO depends on this — must match the WordPress permalink structure exactly.
+[permalinks]
+  posts = "/:year/:month/:day/:slug/"
+
+[sitemap]
+  changefreq = "monthly"
+  filename = "sitemap.xml"
+  priority = 0.5

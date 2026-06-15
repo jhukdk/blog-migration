@@ -1,0 +1,23 @@
+# Congo requires these goldmark/highlight settings to render correctly.
+# Do NOT empty this file. noClasses = false is required for code-copy + theming.
+[goldmark]
+  [goldmark.renderer]
+    unsafe = true # Required to render raw HTML in Markdown (WordPress imports).
+
+[highlight]
+  anchorLineNos = false
+  codeFences = true
+  guessSyntax = true
+  hl_Lines = ""
+  lineAnchors = ""
+  lineNoStart = 1
+  lineNos = false
+  lineNumbersInTable = true
+  noClasses = false # Must stay false so Congo's CSS themes the highlighting.
+  style = "monokai"
+  tabWidth = 4
+
+[tableOfContents]
+  startLevel = 2
+  endLevel = 4
+  ordered = false
