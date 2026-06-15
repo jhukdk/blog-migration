@@ -1,18 +1,48 @@
-# infra — Terraform (placeholder)
+# infra — Terraform for jhuk.tech
 
-Terraform for the jhuk.tech static-site infrastructure. Added in a later phase.
+Infrastructure as code for the jhuk.tech static site. Everything is `us-east-1`.
 
-Planned (all `us-east-1`, all code-managed):
+## What this provisions
+- **S3 content bucket** (`s3.tf`) — private, no public access, no website hosting,
+  versioned, SSE-S3. Readable only by CloudFront via Origin Access Control.
+- **CloudFront** (`cloudfront.tf`) — OAC origin to the bucket, `default_root_object`
+  `index.html`, 403/404 → `/404.html` (404), and a viewer-request **CloudFront
+  Function** (`functions/rewrite_index.js`) that appends `index.html` to directory
+  paths so Hugo pretty URLs resolve. Serves on the default `*.cloudfront.net` domain
+  (no custom alias/cert attached yet).
+- **ACM certificate** (`acm.tf`) — DNS-validated cert for `jhuk.tech` +
+  `www.jhuk.tech`. Validation records are **output only**; add them at Namecheap.
+- **GitHub OIDC + deploy role** (`iam_oidc.tf`) — keyless CI auth. The role is
+  assumable only by the configured repo/branch and is scoped to read/write on the
+  content bucket plus `cloudfront:CreateInvalidation` on the one distribution.
 
-- Private S3 content bucket (no public access, no S3 website hosting).
-- CloudFront distribution reading the bucket via Origin Access Control (OAC).
-- ACM certificate (DNS-validated via a CNAME added manually at Namecheap).
-- GitHub OIDC provider + least-privilege CI deploy role
-  (S3 read/write on the content bucket + `cloudfront:CreateInvalidation` on the
-  one distribution — nothing more).
+## Files
+`versions.tf` (providers + S3 backend), `providers.tf`, `variables.tf`, `s3.tf`,
+`cloudfront.tf`, `functions/rewrite_index.js`, `acm.tf`, `iam_oidc.tf`, `outputs.tf`.
 
-Remote state lives in the existing bucket `jhuk-tech-tfstate-877995959706`
-(versioned, S3 native locking). One concern per file: `s3.tf`, `cloudfront.tf`,
-`acm.tf`, `iam_oidc.tf`, `outputs.tf`, `variables.tf`.
+## State backend
+Remote state in the pre-existing bucket `jhuk-tech-tfstate-877995959706`
+(key `jhuk/terraform.tfstate`, native S3 locking via `use_lockfile`). The bucket is
+created manually and is **not** managed by this code.
 
-> Applies are run by the maintainer only. Claude runs `terraform plan` only.
+## Usage
+```sh
+terraform init                 # configures the S3 backend
+terraform plan                 # review — the maintainer applies, not Claude
+terraform apply                # maintainer only
+```
+After apply, read `terraform output acm_validation_records` and add the CNAME(s) at
+Namecheap to validate the certificate.
+
+## Notes / caveats
+- **One OIDC provider per account.** An AWS account can have only one IAM OIDC
+  provider for `token.actions.githubusercontent.com`. If one already exists, import
+  it before apply to avoid `EntityAlreadyExists`:
+  `terraform import aws_iam_openid_connect_provider.github arn:aws:iam::877995959706:oidc-provider/token.actions.githubusercontent.com`
+- The certificate stays `PENDING_VALIDATION` until the Namecheap CNAME is added.
+  That does not block serving on the CloudFront default domain.
+- Provider pinned to `hashicorp/aws ~> 6.50`; Terraform `>= 1.10` (for `use_lockfile`).
+
+## Hard rules
+Per repo `CLAUDE.md`: this code is plan-reviewed only — **applies are run by the
+maintainer**. No DNS records, no public bucket, least-privilege CI role.
