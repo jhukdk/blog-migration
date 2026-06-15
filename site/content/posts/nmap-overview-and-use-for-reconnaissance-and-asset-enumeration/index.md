@@ -4,6 +4,7 @@ date: 2022-01-25T20:16:00+00:00
 slug: "nmap-overview-and-use-for-reconnaissance-and-asset-enumeration"
 categories: ["HackTheBox", "Scripting", "TryHackMe"]
 draft: false
+thumbnail: "SkEfTInEXb.jpg"
 ---
 Nmap is an extremely powerful, free and open-source network mapping utility that can be used for many purposes. In this post, I provide a brief overview of what Nmap can be used for in the cybersecurity industry. These various and useful functions include determining what hosts exist on a network, what services those hosts may offer, and what operating systems (and OS versions) may be running on the backend. Nmap can also scan information about firewalls and potentially also how to evade them. All of this information is acquired across whichever devices respond in the scanned range of IP addresses.
 

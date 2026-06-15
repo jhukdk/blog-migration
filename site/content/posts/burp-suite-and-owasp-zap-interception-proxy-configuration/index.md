@@ -4,6 +4,7 @@ date: 2023-07-11T18:03:28+00:00
 slug: "burp-suite-and-owasp-zap-interception-proxy-configuration"
 categories: ["CTF", "Writeup", "ZAP"]
 draft: false
+thumbnail: "Screenshot-2023-05-30-175808.png"
 ---
 An interception proxy is a must-have tool in any web application penetration tester's arsenal. In brief, an interception proxy is an application downloaded on a host computer and sits in-between a client browser and the remote web server. This specialized tool is purpose-built to intercept HTTP requests that are initiated from the client browser **before** the message is delivered to the remote web server. The tool can manipulate certain elements of the request such as session cookies or parameter values. The application proxy *also* handles the HTTP response **in-reverse**, meaning the tool can examine the raw data contained in the server's response before the content is ultimately rendered by the client browser.
 

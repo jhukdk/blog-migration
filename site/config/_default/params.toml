@@ -33,7 +33,7 @@ robots = "index, follow"
   showRecentItems = 5
   showMoreLink = true
   showMoreLinkDest = "/posts/"
-  cardView = false
+  cardView = true          # Render the recent-posts list as image cards (thumbnails).
 
 [article]
   showDate = true
@@ -48,6 +48,7 @@ robots = "index, follow"
 [list]
   showSummary = true
   showTableOfContents = false
+  cardView = true          # Render section lists (e.g. /posts/) as image cards.
 
 [author]
   name = "David J. Kim"

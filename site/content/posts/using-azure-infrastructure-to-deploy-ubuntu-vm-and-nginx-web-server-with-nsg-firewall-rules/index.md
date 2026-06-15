@@ -4,6 +4,7 @@ date: 2026-03-05T03:36:57+00:00
 slug: "using-azure-infrastructure-to-deploy-ubuntu-vm-and-nginx-web-server-with-nsg-firewall-rules"
 categories: ["Writeup"]
 draft: false
+thumbnail: "Screenshot-2026-03-04-at-8.50.38-PM-1024x772.png"
 ---
 In the field of Cybersecurity and DevOps, there is no substitute for hands-on experience with cloud infrastructure. To further my own practice, I have recently started diving into the **Microsoft Azure ecosystem**. It’s an excellent sandbox for learning with $100 in credits and 750 hours of B1s compute, you have exactly what you need to keep a single VM instance running 24/7 while you experiment.
 

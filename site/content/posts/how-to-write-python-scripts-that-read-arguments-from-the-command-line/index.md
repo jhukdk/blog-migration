@@ -4,6 +4,7 @@ date: 2022-01-21T14:35:00+00:00
 slug: "how-to-write-python-scripts-that-read-arguments-from-the-command-line"
 categories: ["Python", "Scripting"]
 draft: false
+thumbnail: "1_oz2ZXPTo-K7_h1TI8yvYFw.jpeg"
 ---
 In this writeup, I will cover how a custom script in python “knows” to read text input by the user written at the command line. In line 1, the sys module is first imported. This makes all functions defined within the sys module available to the namespace of the rest of our program.
 

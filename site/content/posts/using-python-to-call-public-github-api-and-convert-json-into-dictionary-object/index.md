@@ -4,6 +4,7 @@ date: 2026-02-24T11:33:00+00:00
 slug: "using-python-to-call-public-github-api-and-convert-json-into-dictionary-object"
 categories: ["Python", "Scripting"]
 draft: false
+thumbnail: "Screenshot-2026-06-09-at-7.45.43-PM.png"
 ---
 I use Python locally within Visual Studio Code to call a public API. The goal of this exercise is not only to make a successful HTTP request, but also to understand the individual parts of a small Python script that interacts with a real internet service.
 
