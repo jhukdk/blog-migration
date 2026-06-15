@@ -1,12 +1,21 @@
-# .github/workflows — CI/CD (placeholder)
+# .github/workflows — CI/CD
 
-GitHub Actions workflows for jhuk.tech. Added in a later phase.
+## `deploy.yml`
+On push to `main` that touches `site/**` (or via manual `workflow_dispatch`):
 
-Planned: on push to `main`, build the Hugo site (`/site`) and deploy content via
-GitHub OIDC (no stored AWS keys):
+1. Checkout, set up Go (Congo is a Hugo Module) and Hugo extended.
+2. `hugo --minify --gc` in `/site` (builds with the production `https://jhuk.tech/`
+   baseURL from the committed config).
+3. Authenticate to AWS via **GitHub OIDC** — assumes the deploy role; no stored keys.
+4. `aws s3 sync ./site/public s3://<bucket> --delete`.
+5. `aws cloudfront create-invalidation --paths "/*"` on the distribution.
 
-1. Checkout + set up Hugo (extended) and Go (for Hugo Modules).
-2. `hugo --gc --minify` to build `/site/public`.
-3. Assume the least-privilege deploy role via OIDC.
-4. `aws s3 sync` to the private content bucket.
-5. `aws cloudfront create-invalidation` on the single distribution.
+### Required repository variables (Settings → Secrets and variables → Actions → Variables)
+| Variable | Value | Source |
+|---|---|---|
+| `DEPLOY_ROLE_ARN` | OIDC deploy role ARN | `terraform output deploy_role_arn` |
+| `CONTENT_BUCKET` | content bucket name | `terraform output content_bucket_name` |
+| `DISTRIBUTION_ID` | CloudFront distribution ID | `terraform output cloudfront_distribution_id` |
+
+These are non-secret **Variables** (not Secrets). The role's trust policy already
+restricts assumption to this repo's `main` branch, so no AWS keys are ever stored.

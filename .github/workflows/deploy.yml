@@ -1,0 +1,66 @@
+name: Deploy site
+
+# Build and deploy the Hugo site on pushes to main that touch /site.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - ".github/workflows/deploy.yml"
+  workflow_dispatch: {}
+
+# OIDC: id-token write is required to mint the token for AssumeRoleWithWebIdentity.
+# No long-lived AWS keys are stored anywhere.
+permissions:
+  id-token: write
+  contents: read
+
+# Never run two deploys at once; let an in-flight deploy finish rather than
+# cancelling it mid-sync.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: us-east-1
+  HUGO_VERSION: 0.163.1
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Congo is installed via Hugo Modules, so Go is needed to fetch it.
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: site/go.mod
+          cache-dependency-path: site/go.sum
+
+      - name: Set up Hugo (extended)
+        uses: peaceiris/actions-hugo@v3
+        with:
+          hugo-version: ${{ env.HUGO_VERSION }}
+          extended: true
+
+      # baseURL comes from the committed config (https://jhuk.tech/) — production.
+      - name: Build
+        working-directory: ./site
+        run: hugo --minify --gc
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Sync to S3
+        run: aws s3 sync ./site/public "s3://${{ vars.CONTENT_BUCKET }}" --delete
+
+      - name: Invalidate CloudFront
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "${{ vars.DISTRIBUTION_ID }}" \
+            --paths "/*"
