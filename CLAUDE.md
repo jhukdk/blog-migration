@@ -11,8 +11,10 @@ All infrastructure is code; all content is Markdown.
   privilege CI deploy role. Remote state in an existing S3 bucket.
 - `/.github/workflows`: on push to main, build Hugo and deploy content
   (S3 sync + CloudFront invalidation) via GitHub OIDC — no stored AWS keys.
-- DNS stays at Namecheap through cutover. ACM is validated by a CNAME I add
-  manually at Namecheap. Route 53 is NOT used in this phase.
+- DNS is hosted in a Route 53 public hosted zone (`route53.tf`); the domain stays
+  registered at Namecheap with its nameservers pointed at Route 53. Apex and www
+  are A/AAAA aliases to the CloudFront distribution. ACM validation records are
+  managed in Terraform (`acm.tf`) so the cert auto-renews.
 
 ## Region
 - Everything is us-east-1. The ACM cert for CloudFront and the distribution
@@ -22,7 +24,9 @@ All infrastructure is code; all content is Markdown.
 - NEVER run `terraform apply`/`destroy` or any state-changing `aws` CLI
   command. Write code and run `terraform plan` only. I run all applies.
 - NEVER create, modify, or delete AWS resources outside Terraform.
-- NEVER touch DNS records or nameservers. I handle all DNS manually.
+- DNS records live in the Route 53 zone in Terraform — change them there, never
+  by hand. The registrar nameserver delegation at Namecheap is mine to change; I
+  handle that cutover manually.
 - The S3 content bucket stays PRIVATE; CloudFront reads it via OAC only.
   Never enable public access or S3 static-website hosting.
 - Preserve permalinks EXACTLY: `/:year/:month/:day/:slug/`. SEO depends on it.
@@ -34,8 +38,8 @@ All infrastructure is code; all content is Markdown.
 
 ## Conventions
 - Small, focused commits. Pin Terraform provider versions; run `terraform fmt`.
-- One concern per Terraform file (s3.tf, cloudfront.tf, acm.tf, iam_oidc.tf,
-  outputs.tf, variables.tf).
+- One concern per Terraform file (s3.tf, cloudfront.tf, acm.tf, route53.tf,
+  iam_oidc.tf, outputs.tf, variables.tf).
 - When unsure of an AWS provider argument, check current docs, don't guess.
 
 ## State backend (I create this bucket manually; do not create it in code)

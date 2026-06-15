@@ -12,9 +12,28 @@ resource "aws_acm_certificate" "this" {
   }
 }
 
+# DNS validation records, now that the zone is hosted in Route 53. Terraform owns
+# these so the cert validates and auto-renews without manual Namecheap entries.
+resource "aws_route53_record" "acm_validation" {
+  for_each = {
+    for dvo in aws_acm_certificate.this.domain_validation_options :
+    dvo.domain_name => {
+      name  = dvo.resource_record_name
+      type  = dvo.resource_record_type
+      value = dvo.resource_record_value
+    }
+  }
+
+  zone_id         = aws_route53_zone.this.zone_id
+  name            = each.value.name
+  type            = each.value.type
+  ttl             = 300
+  records         = [each.value.value]
+  allow_overwrite = true
+}
+
 # Gate that confirms the cert is validated/ISSUED before CloudFront attaches it.
-# No validation_record_fqdns: the validation CNAME lives at Namecheap (not managed
-# by Terraform), so this just waits on ACM status rather than creating DNS records.
 resource "aws_acm_certificate_validation" "this" {
-  certificate_arn = aws_acm_certificate.this.arn
+  certificate_arn         = aws_acm_certificate.this.arn
+  validation_record_fqdns = [for r in aws_route53_record.acm_validation : r.fqdn]
 }

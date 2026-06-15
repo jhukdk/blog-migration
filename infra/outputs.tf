@@ -37,3 +37,8 @@ output "deploy_role_arn" {
   description = "ARN of the GitHub Actions OIDC deploy role."
   value       = aws_iam_role.deploy.arn
 }
+
+output "route53_name_servers" {
+  description = "Set these four as Custom DNS nameservers at the Namecheap registrar."
+  value       = aws_route53_zone.this.name_servers
+}
