@@ -1,8 +1,8 @@
-# jhuk.tech — WordPress → AWS static-site migration
+# From Cpanel WordPress → AWS Cloudfront and S3
 
-Migrates the WordPress blog at [jhuk.tech](https://jhuk.tech) to a [Hugo](https://gohugo.io)
-static site hosted on **AWS S3 + CloudFront**, provisioned with **Terraform** and
-deployed by **GitHub Actions**. All infrastructure is code; all content is Markdown.
+This project migrates my personal WordPress blog at [jhuk.tech](https://jhuk.tech) to 
+a [Hugo](https://gohugo.io) static site hosted on **AWS S3 + CloudFront**, provisioned with 
+**Terraform** and deployed by **GitHub Actions**. All infrastructure is code; all content is Markdown.
 
 ## Architecture
 
