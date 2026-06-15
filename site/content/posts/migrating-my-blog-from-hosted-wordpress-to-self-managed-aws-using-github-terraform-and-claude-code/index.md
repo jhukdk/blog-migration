@@ -1,11 +1,11 @@
 ---
-title: "Migrating my blog from WordPress to AWS with Hugo, Terraform, and Claude Code"
+title: "Migrating my blog from hosted WordPress to self-managed AWS using Github Terraform and Claude Code"
 date: 2026-06-15T12:00:00+00:00
-slug: "migrating-my-blog-from-wordpress-to-aws-with-hugo-terraform-and-claude-code"
+slug: "migrating-my-blog-from-hosted-wordpress-to-self-managed-aws-using-github-terraform-and-claude-code"
 categories: ["Writeup", "DevOps"]
 draft: false
 ---
-For years this blog lived on a traditional WordPress install behind a cPanel host. It served me well, but it also carried everything that comes with running WordPress on the open internet: a database to babysit, a PHP runtime to patch, plugins to keep current, and a login page that the entire internet loves to brute-force. As my interests shifted further into cloud and DevOps, I wanted my own site to reflect the way I now think about infrastructure—**version-controlled, reproducible, and static by default.**
+For years this blog lived on a managed WordPress instance behind a cPanel host. Initially it was a great way to learn and abstracting away many hosting-as-a-service was helpful. But I learned that exposing a login page and comments section to the open internet comes with many cybersecurity issues such as brute-force authentication and botnets posting XSS payloads and gambling links in the comments section. As my interests shifted further into cloud and DevOps, I wanted my own site to reflect the way I now think about infrastructure—**version-controlled, reproducible, and declarative in nature.**
 
 So I set out to migrate the whole thing to a [Hugo](https://gohugo.io) static site hosted on **AWS S3 + CloudFront**, provisioned entirely with **Terraform** and deployed by **GitHub Actions**. Here is a breakdown of the architecture and the decisions behind each piece.
 
@@ -20,7 +20,7 @@ The trade-off is that you give up the WordPress dashboard. For me that was a fea
 The migrated site is built from four moving parts that each do one job well:
 
 - **Hugo** with the [Congo](https://github.com/jpanther/congo) theme renders Markdown into a fast, themed static site. Congo is pulled in as a Hugo Module rather than a submodule, so the theme version is pinned in `go.mod` and updates are explicit.
-- **Amazon S3** holds the built site in a **private** bucket. Nothing is served directly from S3.
+- **Amazon S3** holds the built site in a **private** bucket. Nothing is served publicly from S3.
 - **Amazon CloudFront** sits in front of the bucket and is the only thing allowed to read it, using an **Origin Access Control (OAC)** signature.
 - **Terraform** describes every one of those resources as code, so the entire stack can be reviewed in a pull request and rebuilt from scratch.
 
@@ -32,9 +32,9 @@ I made a rule for myself early on: nothing gets clicked into existence in the AW
 
 ## Preserving the Past: Content and Permalinks
 
-The single most important constraint of the whole project was **not breaking existing links.** Every post that had been indexed by search engines and shared over the years used WordPress's dated permalink structure, and I was determined to preserve it exactly.
+One important constraint of the project was **not breaking existing links.** Every post that had been indexed by search engines and shared over the years used WordPress's dated permalink structure, and I intended to preserve it exactly.
 
-I exported the old site to a WordPress WXR file and wrote a small Python script to convert each post into a Hugo page bundle—an `index.md` with clean front matter, alongside its original images. The Hugo config then locks the permalink pattern to match WordPress precisely:
+I exported the old site to a WordPress WXR file and Claude Code helped me write a small Python script to convert each post into a Hugo page bundle—an `index.md` with clean front matter, alongside its original images. The Hugo config then locks the permalink pattern to match WordPress precisely:
 
 ```toml
 [permalinks]
@@ -45,7 +45,7 @@ Preserving each post's original `slug` and publish date means a URL like `/2026/
 
 Every migrated post kept its formatting and its embedded screenshots, co-located in the page bundle rather than scattered across a `wp-content/uploads` tree.
 
-## Pretty URLs at the Edge
+## "Pretty" URLs at the Edge
 
 Static object storage has no concept of a directory index, but Hugo emits "pretty" URLs that look like directories (for example `/posts/`). To bridge that gap I attached a small **CloudFront viewer-request function** that appends `index.html` to directory-style paths so they resolve to the right object in S3.
 
@@ -65,8 +65,7 @@ I leaned heavily on **Claude Code** to manage this migration end to end—drafti
 
 The site is live, the content is preserved, and every deploy is a single `git push`. The remaining work is mostly about cutover and polish:
 
-- Moving DNS over so the apex domain points at CloudFront for good.
-- Adding a few more original write-ups now that publishing is frictionless.
+- Adding more original write-ups now that publishing uses a GitHub Actions CI/CD pipeline.
 - Continuing to harden and tidy the Terraform as the project grows.
 
 Migrating off WordPress turned a blog into an infrastructure project, and that was exactly the point. I will keep documenting the journey as I build out the rest of my cloud and DevOps toolkit.
