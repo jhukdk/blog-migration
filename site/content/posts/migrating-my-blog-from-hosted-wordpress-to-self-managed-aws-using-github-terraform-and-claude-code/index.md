@@ -1,13 +1,13 @@
 ---
-title: "Migrating my blog from hosted WordPress to self-managed AWS using Github Terraform and Claude Code"
+title: "Migrating my blog from WordPress to AWS using Github Terraform and Claude Code"
 date: 2026-06-15T12:00:00+00:00
-slug: "migrating-my-blog-from-hosted-wordpress-to-self-managed-aws-using-github-terraform-and-claude-code"
+slug: "migrating-my-blog-from-wordpress-to-aws-using-github-terraform-and-claude-code"
 categories: ["Writeup", "DevOps"]
 draft: false
 ---
-For years this blog lived on a managed WordPress instance behind a cPanel host. Initially it was a great way to learn and abstracting away many hosting-as-a-service was helpful. But I learned that exposing a login page and comments section to the open internet comes with many cybersecurity issues such as brute-force authentication and botnets posting XSS payloads and gambling links in the comments section. As my interests shifted further into cloud and DevOps, I wanted my own site to reflect the way I now think about infrastructure—**version-controlled, reproducible, and declarative in nature.**
+For years, I used a managed WordPress instance behind a cPanel host to write this blog. Initially it was a great way to learn. I was able to abstract away hosting-as-a-service. But Wordpress exposes an administrative login page and my comments section was open to the public internet which resulted in many cybersecurity issues such as brute-force authentication and botnets posting XSS payloads and gambling links. As my interests grew farther into cloud and DevOps, I wanted my own site to reflect the way I now think about infrastructure—**version-controlled, reproducible, and declarative in nature.**
 
-So I set out to migrate the whole thing to a [Hugo](https://gohugo.io) static site hosted on **AWS S3 + CloudFront**, provisioned entirely with **Terraform** and deployed by **GitHub Actions**. Here is a breakdown of the architecture and the decisions behind each piece.
+I migrated the entire installation to a [Hugo](https://gohugo.io) static site hosted on **AWS S3 + CloudFront**, provisioned entirely with **Terraform** and deployed by **GitHub Actions**. Here is a breakdown of the architecture and the decisions behind each piece.
 
 ## Why Leave WordPress?
 
