@@ -11,3 +11,10 @@ resource "aws_acm_certificate" "this" {
     create_before_destroy = true
   }
 }
+
+# Gate that confirms the cert is validated/ISSUED before CloudFront attaches it.
+# No validation_record_fqdns: the validation CNAME lives at Namecheap (not managed
+# by Terraform), so this just waits on ACM status rather than creating DNS records.
+resource "aws_acm_certificate_validation" "this" {
+  certificate_arn = aws_acm_certificate.this.arn
+}

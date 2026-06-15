@@ -32,9 +32,9 @@ resource "aws_cloudfront_distribution" "this" {
   default_root_object = "index.html"
   price_class         = "PriceClass_100"
 
-  # No custom domain yet — serve on the default *.cloudfront.net name. The ACM
-  # cert in acm.tf is created but intentionally NOT attached here.
-  aliases = []
+  # Custom domains served by this distribution. Must be a subset of the ACM cert's
+  # names; derived from the same vars so aliases and cert SANs stay in lockstep.
+  aliases = concat([var.domain_name], var.subject_alternative_names)
 
   origin {
     origin_id                = local.s3_origin_id
@@ -78,7 +78,11 @@ resource "aws_cloudfront_distribution" "this" {
     }
   }
 
+  # Attach the validated ACM cert via SNI with a modern TLS floor. References the
+  # validation resource so the cert is only attached once ACM reports it ISSUED.
   viewer_certificate {
-    cloudfront_default_certificate = true
+    acm_certificate_arn      = aws_acm_certificate_validation.this.certificate_arn
+    ssl_support_method       = "sni-only"
+    minimum_protocol_version = "TLSv1.2_2021"
   }
 }
