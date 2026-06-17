@@ -8,8 +8,9 @@ All infrastructure is code; all content is Markdown.
 - Hugo static site. Source in `/site`; posts are Markdown with front matter.
 - `/infra`: Terraform for a private S3 content bucket, CloudFront (Origin
   Access Control) with a viewer-request function (www→apex 301 redirect +
-  pretty-URL→index.html rewrite), ACM certificate, GitHub OIDC provider, and
-  a least-privilege CI deploy role. Remote state in an existing S3 bucket.
+  pretty-URL→index.html rewrite), a WAFv2 web ACL on the distribution, ACM
+  certificate, GitHub OIDC provider, and a least-privilege CI deploy role.
+  Remote state in an existing S3 bucket.
 - `/.github/workflows`: on push to main, build Hugo and deploy content
   (S3 sync + CloudFront invalidation) via GitHub OIDC — no stored AWS keys.
 - DNS stays at Namecheap through cutover. ACM is validated by a CNAME I add
@@ -39,8 +40,8 @@ All infrastructure is code; all content is Markdown.
 
 ## Conventions
 - Small, focused commits. Pin Terraform provider versions; run `terraform fmt`.
-- One concern per Terraform file (s3.tf, cloudfront.tf, acm.tf, iam_oidc.tf,
-  outputs.tf, variables.tf). CloudFront function code lives under
+- One concern per Terraform file (s3.tf, cloudfront.tf, waf.tf, acm.tf,
+  iam_oidc.tf, outputs.tf, variables.tf). CloudFront function code lives under
   infra/functions/, not inline in HCL.
 - When unsure of an AWS provider argument, check current docs, don't guess.
 

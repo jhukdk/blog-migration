@@ -37,6 +37,15 @@ variable "github_oidc_subjects" {
   default     = ["repo:jhukdk/blog-migration:ref:refs/heads/main"]
 }
 
+variable "waf_rate_limit" {
+  description = <<-EOT
+    WAF rate-based rule threshold: max requests per source IP within a
+    5-minute window before the IP is blocked.
+  EOT
+  type        = number
+  default     = 2000
+}
+
 variable "tags" {
   description = "Tags applied to all resources via the provider default_tags."
   type        = map(string)

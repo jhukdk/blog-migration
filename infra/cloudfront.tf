@@ -32,6 +32,10 @@ resource "aws_cloudfront_distribution" "this" {
   default_root_object = "index.html"
   price_class         = "PriceClass_100"
 
+  # Edge WAF (AWS-managed common rules + per-IP rate limit). CLOUDFRONT-scoped
+  # web ACLs are attached by ARN. Defined in waf.tf.
+  web_acl_id = aws_wafv2_web_acl.this.arn
+
   # Custom domains served by this distribution. Must be a subset of the ACM cert's
   # names; derived from the same vars so aliases and cert SANs stay in lockstep.
   aliases = concat([var.domain_name], var.subject_alternative_names)

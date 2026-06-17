@@ -37,3 +37,13 @@ output "deploy_role_arn" {
   description = "ARN of the GitHub Actions OIDC deploy role."
   value       = aws_iam_role.deploy.arn
 }
+
+output "waf_web_acl_arn" {
+  description = "ARN of the CloudFront-scoped WAFv2 web ACL."
+  value       = aws_wafv2_web_acl.this.arn
+}
+
+output "waf_log_group_name" {
+  description = "CloudWatch Logs group receiving WAF logs."
+  value       = aws_cloudwatch_log_group.waf.name
+}
