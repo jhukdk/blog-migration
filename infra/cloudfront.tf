@@ -60,15 +60,9 @@ resource "aws_cloudfront_distribution" "this" {
     }
   }
 
-  # The private bucket returns 403 (not 404) for missing keys because ListBucket
-  # is not granted, so map both to Hugo's /404.html with a 404 status.
-  custom_error_response {
-    error_code            = 403
-    response_code         = 404
-    response_page_path    = "/404.html"
-    error_caching_min_ttl = 10
-  }
-
+  # The OAC principal is granted s3:ListBucket (see s3.tf), so S3 returns a true
+  # 404 for missing keys. Map that to Hugo's /404.html. 403 is intentionally NOT
+  # remapped so genuine forbidden responses (e.g. WAF blocks) surface as 403.
   custom_error_response {
     error_code            = 404
     response_code         = 404
