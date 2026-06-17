@@ -4,6 +4,7 @@ date: 2026-06-16T12:00:00+00:00
 slug: "why-www-and-apex-rendered-differently-sri-cors-and-the-301-redirect"
 categories: ["DevOps", "Writeup"]
 draft: false
+thumbnail: "Screenshot-2026-06-16-at-8.53.24-PM.png"
 ---
 While cleaning up the CloudFront configuration for this blog, I removed a `www.jhuk.tech` → `jhuk.tech` 301 redirect that I assumed was redundant. My reasoning was simple: if both hostnames point at the same CloudFront distribution and the same S3 bucket, then both should serve the same site. Why force a redirect at all?
 
