@@ -7,8 +7,8 @@ All infrastructure is code; all content is Markdown.
 ## Architecture
 - Hugo static site. Source in `/site`; posts are Markdown with front matter.
 - `/infra`: Terraform for a private S3 content bucket, CloudFront (Origin
-  Access Control) with a viewer-request function (pretty-URL→index.html
-  rewrite), ACM certificate, GitHub OIDC provider, and
+  Access Control) with a viewer-request function (www→apex 301 redirect +
+  pretty-URL→index.html rewrite), ACM certificate, GitHub OIDC provider, and
   a least-privilege CI deploy role. Remote state in an existing S3 bucket.
 - `/.github/workflows`: on push to main, build Hugo and deploy content
   (S3 sync + CloudFront invalidation) via GitHub OIDC — no stored AWS keys.
@@ -27,9 +27,10 @@ All infrastructure is code; all content is Markdown.
 - The S3 content bucket stays PRIVATE; CloudFront reads it via OAC only.
   Never enable public access or S3 static-website hosting.
 - Preserve permalinks EXACTLY: `/:year/:month/:day/:slug/`. SEO depends on it.
-- The pretty-URL→`index.html` rewrite lives in the CloudFront viewer-request
-  function `infra/functions/rewrite_index.js`; only one function can bind per
-  event type.
+- `www.jhuk.tech` 301-redirects to the apex `jhuk.tech` for one canonical host.
+  That redirect AND the pretty-URL→`index.html` rewrite both live in the single
+  CloudFront viewer-request function `infra/functions/rewrite_index.js`; only one
+  function can bind per event type, so keep both concerns in that one file.
 - Scope the CI IAM role to least privilege: read/write on the content bucket
   and cloudfront:CreateInvalidation on the one distribution. Nothing more.
 - NEVER commit secrets or state. `.gitignore` must cover *.tfstate*,
