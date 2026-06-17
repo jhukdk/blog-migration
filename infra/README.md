@@ -4,9 +4,12 @@ Infrastructure as code for the jhuk.tech static site. Everything is `us-east-1`.
 
 ## What this provisions
 - **S3 content bucket** (`s3.tf`) — private, no public access, no website hosting,
-  versioned, SSE-S3. Readable only by CloudFront via Origin Access Control.
+  versioned, SSE-S3. Readable only by CloudFront via Origin Access Control (OAC),
+  which is granted `s3:GetObject` plus `s3:ListBucket` so missing keys return a
+  true 404 rather than 403.
 - **CloudFront** (`cloudfront.tf`) — OAC origin to the bucket, `default_root_object`
-  `index.html`, 403/404 → `/404.html` (404), and a viewer-request **CloudFront
+  `index.html`, 404 → `/404.html` (404) — 403 is left untouched so WAF/forbidden
+  responses surface as 403 — and a viewer-request **CloudFront
   Function** (`functions/rewrite_index.js`) that (1) 301-redirects `www.jhuk.tech`
   to the apex `https://jhuk.tech` for canonicalization, then (2) appends
   `index.html` to directory paths so Hugo pretty URLs resolve. Serves on the

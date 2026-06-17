@@ -65,6 +65,29 @@ data "aws_iam_policy_document" "content" {
       values   = [aws_cloudfront_distribution.this.arn]
     }
   }
+
+  # Grant ListBucket to the same OAC principal so S3 returns a true 404 (not
+  # 403) for missing keys. This lets CloudFront map 404 -> /404.html and keeps
+  # 403 reserved for genuinely forbidden responses (e.g. WAF blocks). Scoped to
+  # the bucket and the one distribution; the bucket is still never public.
+  statement {
+    sid     = "AllowCloudFrontOACList"
+    effect  = "Allow"
+    actions = ["s3:ListBucket"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["cloudfront.amazonaws.com"]
+    }
+
+    resources = [aws_s3_bucket.content.arn]
+
+    condition {
+      test     = "StringEquals"
+      variable = "AWS:SourceArn"
+      values   = [aws_cloudfront_distribution.this.arn]
+    }
+  }
 }
 
 resource "aws_s3_bucket_policy" "content" {
