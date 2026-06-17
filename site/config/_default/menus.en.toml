@@ -17,3 +17,27 @@
   name = "About"
   pageRef = "about-me"
   weight = 40
+
+# Icon-only external links, weighted after the menu so they sit next to the
+# search button in the header. showName = false renders the icon alone.
+[[main]]
+  name = "GitHub"
+  title = "GitHub"          # accessible label for the icon-only link
+  url = "https://github.com/jhukdk"
+  weight = 50
+  [main.params]
+    icon = "github"
+    showName = false
+    target = "_blank"
+    rel = "noopener noreferrer"
+
+[[main]]
+  name = "LinkedIn"
+  title = "LinkedIn"
+  url = "https://www.linkedin.com/in/djkim1/"
+  weight = 60
+  [main.params]
+    icon = "linkedin"
+    showName = false
+    target = "_blank"
+    rel = "noopener noreferrer"
