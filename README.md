@@ -17,8 +17,8 @@ Markdown (site/content) ──hugo build──▶ static HTML
 - **Hugo static site** — source in [`/site`](site); posts are Markdown with front
   matter. Theme is [Congo](https://github.com/jpanther/congo) installed via Hugo Modules.
 - **Terraform** — [`/infra`](infra) provisions a private S3 content bucket, CloudFront
-  (Origin Access Control) with a viewer-request function (www→apex 301 redirect +
-  pretty-URL rewrite), an ACM certificate, the GitHub OIDC provider, and a
+  (Origin Access Control) with a viewer-request function (pretty-URL rewrite), an
+  ACM certificate, the GitHub OIDC provider, and a
   least-privilege CI deploy role. Remote state lives in a pre-existing S3 bucket.
 - **CI/CD** — [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml): on push to
   `main` touching `site/**`, build Hugo and deploy (S3 sync + CloudFront invalidation)
@@ -72,9 +72,7 @@ keylessly via GitHub OIDC. Three non-secret repository **Variables** wire it up 
 ## Conventions & guardrails
 
 - Permalinks are preserved exactly as `/:year/:month/:day/:slug/` — SEO depends on it.
-- `www.jhuk.tech` 301-redirects to the apex `https://jhuk.tech` at the edge. That
-  redirect and the pretty-URL→`index.html` rewrite share one CloudFront
-  viewer-request function (only one may bind per event type).
+- The pretty-URL→`index.html` rewrite runs in a CloudFront viewer-request function.
 - The S3 content bucket stays **private**; CloudFront reads it via OAC only.
 - The CI IAM role is least-privilege: read/write on the content bucket and
   `cloudfront:CreateInvalidation` on the one distribution.
