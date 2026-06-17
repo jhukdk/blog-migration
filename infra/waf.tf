@@ -11,6 +11,42 @@ resource "aws_wafv2_web_acl" "this" {
     allow {}
   }
 
+  # Demo rule: block any request whose `${var.waf_demo_block_header_name}`
+  # header exactly equals the configured value. Evaluated first (priority 0)
+  # so the block is unambiguous. Useful for demonstrating WAF blocks on demand
+  # (e.g. `curl -H "x-demo-block: blocked" https://jhuk.tech/` -> 403).
+  rule {
+    name     = "DemoBlockByHeader"
+    priority = 0
+
+    action {
+      block {}
+    }
+
+    statement {
+      byte_match_statement {
+        field_to_match {
+          single_header {
+            name = var.waf_demo_block_header_name
+          }
+        }
+        positional_constraint = "EXACTLY"
+        search_string         = var.waf_demo_block_header_value
+
+        text_transformation {
+          priority = 0
+          type     = "NONE"
+        }
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "jhuk-tech-demo-block-header"
+      sampled_requests_enabled   = true
+    }
+  }
+
   # AWS-managed baseline protections (common exploit patterns, bad inputs).
   # override_action { none {} } keeps each managed rule's own action.
   rule {

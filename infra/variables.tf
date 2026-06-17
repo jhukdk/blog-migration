@@ -46,6 +46,21 @@ variable "waf_rate_limit" {
   default     = 2000
 }
 
+variable "waf_demo_block_header_name" {
+  description = <<-EOT
+    Demo rule: requests carrying this HTTP header with the matching value are
+    blocked outright. Header names are matched lowercase by WAF.
+  EOT
+  type        = string
+  default     = "x-demo-block"
+}
+
+variable "waf_demo_block_header_value" {
+  description = "Demo rule: exact header value that triggers a block."
+  type        = string
+  default     = "blocked"
+}
+
 variable "tags" {
   description = "Tags applied to all resources via the provider default_tags."
   type        = map(string)
