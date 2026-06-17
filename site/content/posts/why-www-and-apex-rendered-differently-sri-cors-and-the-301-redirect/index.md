@@ -1,5 +1,5 @@
 ---
-title: "Why www and the Apex Rendered Differently: SRI, CORS, and the 301 Redirect"
+title: "SRI, CORS, 301 Redirect: Discovering rendering issues between domain apex and www subdomain"
 date: 2026-06-16T12:00:00+00:00
 slug: "why-www-and-apex-rendered-differently-sri-cors-and-the-301-redirect"
 categories: ["DevOps", "Writeup"]
@@ -8,6 +8,8 @@ draft: false
 While cleaning up the CloudFront configuration for this blog, I removed a `www.jhuk.tech` → `jhuk.tech` 301 redirect that I assumed was redundant. My reasoning was simple: if both hostnames point at the same CloudFront distribution and the same S3 bucket, then both should serve the same site. Why force a redirect at all?
 
 After deploying the change, I noticed something strange. The apex domain `https://jhuk.tech` rendered perfectly, but `https://www.jhuk.tech` returned the same page as a wall of unstyled HTML — no theme, no layout, no JavaScript. Two URLs, the same bytes on the server, two completely different experiences in the browser. This post is a breakdown of why that happened and the tradeoffs I weighed before settling on a fix.
+
+![www.jhuk.tech rendering as unstyled HTML, with the browser dev tools showing the blocked cross-origin asset requests](Screenshot-2026-06-16-at-8.53.24-PM.png)
 
 ## The Pages Were Identical — the Browser Was Not
 
