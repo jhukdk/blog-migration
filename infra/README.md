@@ -7,8 +7,9 @@ Infrastructure as code for the jhuk.tech static site. Everything is `us-east-1`.
   versioned, SSE-S3. Readable only by CloudFront via Origin Access Control.
 - **CloudFront** (`cloudfront.tf`) — OAC origin to the bucket, `default_root_object`
   `index.html`, 403/404 → `/404.html` (404), and a viewer-request **CloudFront
-  Function** (`functions/rewrite_index.js`) that appends `index.html` to
-  directory paths so Hugo pretty URLs resolve. Serves on the
+  Function** (`functions/rewrite_index.js`) that (1) 301-redirects `www.jhuk.tech`
+  to the apex `https://jhuk.tech` for canonicalization, then (2) appends
+  `index.html` to directory paths so Hugo pretty URLs resolve. Serves on the
   default `*.cloudfront.net` domain (no custom alias/cert attached yet).
 - **ACM certificate** (`acm.tf`) — DNS-validated cert for `jhuk.tech` +
   `www.jhuk.tech`. Validation records are **output only**; add them at Namecheap.
