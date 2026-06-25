@@ -142,15 +142,7 @@ jobs:
 
 The critical line is `id-token: write`. That permission is what authorizes the job to request the JWT from GitHub in the first place. Without it the handshake fails before it begins, since no token is ever minted. The `configure-aws-credentials` action performs the token-for-credentials exchange and exports the temporary credentials as environment variables, so the subsequent `terraform` steps authenticate automatically.
 
-## A Related Gotcha: `Plan: 1 to add` for an Existing Resource
-
-On its first run, the CI `plan` reported that it would **create** an IP set that already existed in AWS, built weeks earlier.
-
-The cause follows directly from the disposable nature of the runner. Terraform tracks what exists by reading its **state file** (`terraform.tfstate`), the record of what it has provisioned. That file lived on my laptop and was correctly git-ignored, since state can contain secrets. The CI runner cloned the repository, found no state file, and therefore compared "the code declares one resource" against "I am aware of zero resources" — and concluded it needed to create one.
-
-The fix is a **remote state backend**, such as an S3 bucket, so that the laptop and the CI runner read the same state. It is a direct argument for shared remote state: the two machines disagreed about reality because each maintained its own copy.
-
-## Why This Pattern Is Correct
+## Why This Pattern Follows Security Best Practices
 
 - **No standing secret to steal.** The largest credential-leak class — a long-lived key in a CI system — does not exist in this design.
 - **Identity is provable and scoped.** AWS confirms the request came from a specific repository and rejects all others.
@@ -158,7 +150,3 @@ The fix is a **remote state backend**, such as an S3 bucket, so that the laptop 
 - **It is auditable.** Every assumption appears in CloudTrail as `AssumeRoleWithWebIdentity`, tagged with the originating GitHub context.
 
 For any pipeline still reading AWS keys from CI secrets, this is the upgrade path: configure the OIDC provider once, define a tightly scoped role, grant `id-token: write`, and remove the keys.
-
----
-
-*Notes from my path toward perimeter security engineering — managing AWS WAF with Python, Terraform, and GitHub Actions.*
