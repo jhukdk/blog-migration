@@ -1,26 +1,24 @@
 ---
 title: "Using OIDC and JWT to Assume an AWS IAM Role in GitHub Actions"
 date: 2026-06-24T12:00:00+00:00
-slug: "no-more-long-lived-keys-github-actions-aws-oidc"
-description: "How a GitHub Actions workflow authenticates to AWS with zero stored secrets — JWTs, the sub claim, federation, and the IAM trust policy that ties it all together."
-summary: "A breakdown of how OIDC federation lets a CI job prove its identity to AWS and assume an IAM role for short-lived credentials, with no access keys stored anywhere."
+slug: "using-OIDC-and-JWT-to-assume-an-AWS-IAM-role-in-GitHub-Actions"
 tags: ["aws", "github-actions", "oidc", "terraform", "security", "ci-cd"]
 categories: ["DevOps", "Security"]
 showTableOfContents: true
 draft: false
 ---
 
-I wired up a GitHub Actions pipeline that runs `terraform plan` against my AWS account on every pull request, with **no AWS access keys stored anywhere**. The mechanism behind that is OIDC federation, and it is one of the cleaner patterns in cloud security once the pieces are laid out in order. This post walks through each layer: the problem it solves, the token exchange, and the two IAM policies that make it safe.
+I wired up a GitHub Actions pipeline that runs `terraform plan` upon PR prior to merge. However, for Terraform to compare the reality state of my existing AWS infrastructure, the CI pipeline first needs to assume a properly scoped IAM role that is associated with my AWS account. The mechanism that enables this is called OIDC federation. This post walks through the technical procedure of issuing an OIDC token from the .yml pipeline, querying the AWS IAM console, then finally how the CI pipeline uses those temporary AWS credentials to complete its Terraform job.   
 
 ## The Problem: Authenticating a Throwaway Machine
 
-My infrastructure — an AWS WAF Web ACL and an IP set — lives as Terraform code in a repository. A CI job runs `terraform plan` on every pull request so that the exact effect of a change on AWS is visible before it is merged.
+My infrastructure — an AWS WAFv2 Web ACL and an IP set — lives as Terraform IaC code in a repository. A CI job runs `terraform plan` on every pull request so that the exact effect of a change on AWS will be visible before the WAF rule is merged.
 
-A GitHub Actions job runs on a fresh virtual machine that GitHub provisions and discards. It clones the repository and knows nothing else. It has no AWS credentials, and AWS refuses requests it cannot identify, so the job cannot touch the account unless it is given some way to authenticate. The question is how to grant a disposable, externally-hosted machine permission to act against an AWS account without leaving a standing credential behind.
+A GitHub Actions job runs on a fresh virtual machine that GitHub provisions and discards. It clones the repository and knows nothing else. It has no AWS credentials, and AWS refuses requests it cannot identify, so the job cannot touch the account unless it is given some way to authenticate. The question is how to grant a disposable, externally-hosted machine permission to act against an AWS account without leaving long-existing credentials behind.
 
 ## The Old Approach: A Stored Access Key
 
-The conventional answer is to create a permanent AWS access key — an access key ID and secret, effectively a username and password for code — store it in **GitHub → Settings → Secrets**, and let the job read it at runtime.
+The conventional answer was to create a permanent AWS access key (an access key ID and secret, effectively a username and password for code), store it in **GitHub → Settings → Secrets**, and let the job read it at runtime.
 
 This works, but it carries two distinct weaknesses:
 
@@ -31,9 +29,9 @@ OIDC federation removes both weaknesses at once.
 
 ## Federation Instead of a Stored Secret
 
-**Federation** means AWS does not hold its own copy of the caller's credentials. Instead it trusts an external identity provider to vouch for the caller — the same model as a "Sign in with Google" button, where the relying site stores no password and defers to Google's assertion.
+**Federation** means AWS does not authenticate the user directly with a username/password or long-lived AWS access keys. Instead, AWS trusts an external identity provider (IdP) to authenticate the caller and provide a signed assertion about their identity. AWS then uses that assertion to grant temporary credentials.
 
-Here the external identity provider is **GitHub**, which operates an **OIDC provider** (OpenID Connect provider) at `token.actions.githubusercontent.com`. Its role is to issue signed statements about workflows on its platform: which repository a job runs in, on which branch, triggered by which event. GitHub vouches for the job, and AWS — configured in advance to trust that provider — issues **temporary** credentials in response. Nothing permanent is stored on either side.
+Here the external identity provider is **GitHub**, which operates an **OIDC provider** (OpenID Connect provider) at `token.actions.githubusercontent.com`. Its role is to issue signed statements about workflows on its platform: which repository a job runs in, on which branch, triggered by which event. GitHub vouches for the job, and AWS (configured in advance to trust that provider) issues **temporary** credentials in response. Nothing permanent is stored on either side.
 
 ## The Token Exchange
 
