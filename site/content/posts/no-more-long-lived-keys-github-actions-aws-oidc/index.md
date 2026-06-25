@@ -8,7 +8,7 @@ showTableOfContents: true
 draft: false
 ---
 
-I wired up a GitHub Actions pipeline that runs `terraform plan` upon PR prior to merge. However for Terraform to compare the reality state of my existing AWS infrastructure, the CI pipeline first needs to assume a properly scoped AWS IAM role. The mechanism for this is called OIDC federation. This post walks through the technical procedure of issuing an OIDC token from the .yml pipeline, how the AWS IAM console is involved, and finally how the CI pipeline uses those temporary AWS credentials to complete its Terraform job.   
+I wired up a GitHub Actions pipeline that runs `terraform plan` in the PR prior to merge. However before Terraform can pull the reality state of my existing AWS infrastructure to compare against terraform.tfstate and declarative *.tf files, the CI pipeline first needs to assume a properly scoped AWS IAM role. The mechanism for this depends on OIDC federation. This post walks through the technical procedure of issuing an OIDC token from the .yml pipeline, how the AWS IAM console is used to define authorization parameters, and finally how the CI pipeline uses those temporary AWS credentials to complete its Terraform job. 
 
 ## The Problem: Authenticating a GitHub Actions VM
 
