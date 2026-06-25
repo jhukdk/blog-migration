@@ -1,8 +1,10 @@
 # jhuk.tech — WordPress → AWS static-site migration
 
-Migrates the WordPress blog at jhuk.tech to a Hugo static site hosted on
-AWS S3 + CloudFront, provisioned with Terraform, deployed by GitHub Actions.
-All infrastructure is code; all content is Markdown.
+The WordPress blog at jhuk.tech has been migrated to a Hugo static site
+hosted on AWS S3 + CloudFront, provisioned with Terraform, deployed by GitHub
+Actions. The migration is complete and live; no reversion to WordPress is
+planned. All infrastructure is code; all content is Markdown. Ongoing work is
+content and incremental infrastructure maintenance, not the cutover itself.
 
 ## Architecture
 - Hugo static site. Source in `/site`; posts are Markdown with front matter.
@@ -13,8 +15,9 @@ All infrastructure is code; all content is Markdown.
   Remote state in an existing S3 bucket.
 - `/.github/workflows`: on push to main, build Hugo and deploy content
   (S3 sync + CloudFront invalidation) via GitHub OIDC — no stored AWS keys.
-- DNS stays at Namecheap through cutover. ACM is validated by a CNAME I add
-  manually at Namecheap. Route 53 is NOT used in this phase.
+- Cutover is complete: DNS stays at Namecheap and now points at CloudFront.
+  ACM is validated by a CNAME I add manually at Namecheap. Route 53 is NOT
+  used.
 
 ## Region
 - Everything is us-east-1. The ACM cert for CloudFront and the distribution
