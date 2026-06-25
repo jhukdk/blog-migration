@@ -8,9 +8,9 @@ showTableOfContents: true
 draft: false
 ---
 
-I wired up a GitHub Actions pipeline that runs `terraform plan` upon PR prior to merge. However, for Terraform to compare the reality state of my existing AWS infrastructure, the CI pipeline first needs to assume a properly scoped IAM role that is associated with my AWS account. The mechanism that enables this is called OIDC federation. This post walks through the technical procedure of issuing an OIDC token from the .yml pipeline, querying the AWS IAM console, then finally how the CI pipeline uses those temporary AWS credentials to complete its Terraform job.   
+I wired up a GitHub Actions pipeline that runs `terraform plan` upon PR prior to merge. However for Terraform to compare the reality state of my existing AWS infrastructure, the CI pipeline first needs to assume a properly scoped AWS IAM role. The mechanism for this is called OIDC federation. This post walks through the technical procedure of issuing an OIDC token from the .yml pipeline, how the AWS IAM console is involved, and finally how the CI pipeline uses those temporary AWS credentials to complete its Terraform job.   
 
-## The Problem: Authenticating a Throwaway Machine
+## The Problem: Authenticating a GitHub Actions VM
 
 My infrastructure — an AWS WAFv2 Web ACL and an IP set — lives as Terraform IaC code in a repository. A CI job runs `terraform plan` on every pull request so that the exact effect of a change on AWS will be visible before the WAF rule is merged.
 
@@ -146,5 +146,3 @@ The critical line is `id-token: write`. That permission is what authorizes the j
 - **Identity is provable and scoped.** AWS confirms the request came from a specific repository and rejects all others.
 - **Least privilege bounds the damage** if anything does go wrong.
 - **It is auditable.** Every assumption appears in CloudTrail as `AssumeRoleWithWebIdentity`, tagged with the originating GitHub context.
-
-For any pipeline still reading AWS keys from CI secrets, this is the upgrade path: configure the OIDC provider once, define a tightly scoped role, grant `id-token: write`, and remove the keys.
