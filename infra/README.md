@@ -13,16 +13,25 @@ Infrastructure as code for the jhuk.tech static site. Everything is `us-east-1`.
   Function** (`functions/rewrite_index.js`) that (1) 301-redirects `www.jhuk.tech`
   to the apex `https://jhuk.tech` for canonicalization, then (2) appends
   `index.html` to directory paths so Hugo pretty URLs resolve. Serves on the
-  default `*.cloudfront.net` domain (no custom alias/cert attached yet).
+  custom domain `jhuk.tech` (+ `www.jhuk.tech`) with the ACM cert attached, so the
+  www→apex 301 is live.
+- **WAFv2 web ACL** (`waf.tf`) — `CLOUDFRONT`-scoped, default action `allow`,
+  attached to the distribution by ARN. Three rules: a demo header-match block, the
+  AWS-managed `CommonRuleSet`, and a per-IP rate limit (`var.waf_rate_limit` over a
+  5-minute window). Blocks surface as 403 (see the CloudFront 403 note above). Logs
+  to a CloudWatch log group (30-day retention).
 - **ACM certificate** (`acm.tf`) — DNS-validated cert for `jhuk.tech` +
-  `www.jhuk.tech`. Validation records are **output only**; add them at Namecheap.
+  `www.jhuk.tech`, validated via a CNAME added manually at Namecheap and attached
+  to the distribution. Terraform outputs the validation records; it does not create
+  them in DNS.
 - **GitHub OIDC + deploy role** (`iam_oidc.tf`) — keyless CI auth. The role is
   assumable only by the configured repo/branch and is scoped to read/write on the
   content bucket plus `cloudfront:CreateInvalidation` on the one distribution.
 
 ## Files
 `versions.tf` (providers + S3 backend), `providers.tf`, `variables.tf`, `s3.tf`,
-`cloudfront.tf`, `functions/rewrite_index.js`, `acm.tf`, `iam_oidc.tf`, `outputs.tf`.
+`cloudfront.tf`, `functions/rewrite_index.js`, `waf.tf`, `acm.tf`, `iam_oidc.tf`,
+`outputs.tf`.
 
 ## State backend
 Remote state in the pre-existing bucket `jhuk-tech-tfstate-877995959706`
@@ -35,16 +44,18 @@ terraform init                 # configures the S3 backend
 terraform plan                 # review — the maintainer applies, not Claude
 terraform apply                # maintainer only
 ```
-After apply, read `terraform output acm_validation_records` and add the CNAME(s) at
-Namecheap to validate the certificate.
+For the certificate, read `terraform output acm_validation_records` and add the
+CNAME(s) at Namecheap; ACM then reports the cert `ISSUED` and CloudFront attaches it.
 
 ## Notes / caveats
 - **One OIDC provider per account.** An AWS account can have only one IAM OIDC
   provider for `token.actions.githubusercontent.com`. If one already exists, import
   it before apply to avoid `EntityAlreadyExists`:
   `terraform import aws_iam_openid_connect_provider.github arn:aws:iam::877995959706:oidc-provider/token.actions.githubusercontent.com`
-- The certificate stays `PENDING_VALIDATION` until the Namecheap CNAME is added.
-  That does not block serving on the CloudFront default domain.
+- The cert is validated by the Namecheap CNAME and attached to the distribution;
+  the site serves on the custom domain `jhuk.tech`. The
+  `aws_acm_certificate_validation` resource gates attachment on ACM reporting
+  `ISSUED`, so a missing/withdrawn CNAME would block the apply rather than fail open.
 - Provider pinned to `hashicorp/aws ~> 6.50`; Terraform `>= 1.10` (for `use_lockfile`).
 
 ## Hard rules

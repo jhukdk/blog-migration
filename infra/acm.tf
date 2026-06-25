@@ -1,7 +1,7 @@
-# ACM certificate for the eventual custom domain. Created now so the validation
-# CNAME is available (via outputs) to add at Namecheap, but NOT attached to the
-# CloudFront distribution yet. DNS validation records are NOT created here —
-# DNS is managed manually at Namecheap.
+# ACM certificate for the custom domain, attached to the CloudFront distribution
+# (see cloudfront.tf). The validation CNAME is exposed via outputs and added at
+# Namecheap. DNS validation records are NOT created here — DNS is managed manually
+# at Namecheap.
 resource "aws_acm_certificate" "this" {
   domain_name               = var.domain_name
   subject_alternative_names = var.subject_alternative_names

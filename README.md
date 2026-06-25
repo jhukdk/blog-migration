@@ -18,13 +18,14 @@ Markdown (site/content) ──hugo build──▶ static HTML
   matter. Theme is [Congo](https://github.com/jpanther/congo) installed via Hugo Modules.
 - **Terraform** — [`/infra`](infra) provisions a private S3 content bucket, CloudFront
   (Origin Access Control) with a viewer-request function (www→apex 301 redirect +
-  pretty-URL rewrite), an ACM certificate, the GitHub OIDC provider, and a
-  least-privilege CI deploy role. Remote state lives in a pre-existing S3 bucket.
+  pretty-URL rewrite), a WAFv2 web ACL on the distribution, an ACM certificate, the
+  GitHub OIDC provider, and a least-privilege CI deploy role. Remote state lives in a
+  pre-existing S3 bucket.
 - **CI/CD** — [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml): on push to
   `main` touching `site/**`, build Hugo and deploy (S3 sync + CloudFront invalidation)
   via GitHub OIDC — no stored AWS keys.
-- **DNS** stays at Namecheap through cutover. The ACM certificate is validated by a CNAME
-  added manually at Namecheap; Route 53 is not used in this phase.
+- **DNS** stays at Namecheap and now points at CloudFront (cutover complete). The ACM
+  certificate is validated by a CNAME added manually at Namecheap; Route 53 is not used.
 
 Everything runs in **us-east-1** (required for the CloudFront ACM certificate).
 
