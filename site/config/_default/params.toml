@@ -3,10 +3,10 @@
 # Sections shown in recent-articles lists and feeds.
 mainSections = ["posts"]
 
-# Appearance — auto dark mode following the visitor's OS preference.
+# Appearance — force dark mode for everyone; ignore the visitor's OS preference.
 colorScheme = "congo"
-defaultAppearance = "light"
-autoSwitchAppearance = true
+defaultAppearance = "dark"
+autoSwitchAppearance = false
 
 # Search — requires the JSON home output configured in hugo.toml.
 enableSearch = true
@@ -23,7 +23,7 @@ robots = "index, follow"
 [footer]
   showCopyright = true
   showThemeAttribution = true
-  showAppearanceSwitcher = true
+  showAppearanceSwitcher = false
   showScrollToTop = true
 
 [homepage]
