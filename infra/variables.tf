@@ -22,6 +22,17 @@ variable "content_bucket_name" {
   default     = "jhuk-tech-content-877995959706"
 }
 
+variable "cf_logs_bucket_name" {
+  description = <<-EOT
+    Name of the CloudFront access-logs bucket. OWNED BY the
+    splunk-enterprise-integration repo (not created here); the distribution's
+    logging_config writes to it. Must match that repo's deterministic name
+    "<project>-cf-logs-<accountid>". Apply that repo first so the bucket exists.
+  EOT
+  type        = string
+  default     = "jhuk-tech-cf-logs-877995959706"
+}
+
 variable "github_repo" {
   description = "GitHub repo (owner/name) whose Actions can assume the deploy role."
   type        = string
