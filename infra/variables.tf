@@ -17,20 +17,26 @@ variable "subject_alternative_names" {
 }
 
 variable "content_bucket_name" {
-  description = "Name of the private S3 bucket that holds the built Hugo site."
+  description = <<-EOT
+    Optional override for the private S3 bucket that holds the built Hugo site.
+    Leave null to derive it as "jhuk-tech-content-<accountid>" from the caller's
+    account (see locals.tf), keeping the account ID out of source.
+  EOT
   type        = string
-  default     = "jhuk-tech-content-877995959706"
+  default     = null
 }
 
 variable "cf_logs_bucket_name" {
   description = <<-EOT
-    Name of the CloudFront access-logs bucket. OWNED BY the
+    Optional override for the CloudFront access-logs bucket. OWNED BY the
     splunk-enterprise-integration repo (not created here); the distribution's
-    logging_config writes to it. Must match that repo's deterministic name
-    "<project>-cf-logs-<accountid>". Apply that repo first so the bucket exists.
+    logging_config writes to it. Leave null to derive it as
+    "jhuk-tech-cf-logs-<accountid>" (see locals.tf), which must match that repo's
+    deterministic name "<project>-cf-logs-<accountid>". Apply that repo first so
+    the bucket exists.
   EOT
   type        = string
-  default     = "jhuk-tech-cf-logs-877995959706"
+  default     = null
 }
 
 variable "github_repo" {

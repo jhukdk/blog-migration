@@ -4,6 +4,10 @@
 *.tfvars
 *.tfvars.json
 .terraform/
+
+# Partial backend config holds the state-bucket name (account-ID bearing); keep
+# it local. Use backend.hcl.example as the committed template.
+backend.hcl
 crash.log
 crash.*.log
 

@@ -29,20 +29,30 @@ Infrastructure as code for the jhuk.tech static site. Everything is `us-east-1`.
   content bucket plus `cloudfront:CreateInvalidation` on the one distribution.
 
 ## Files
-`versions.tf` (providers + S3 backend), `providers.tf`, `variables.tf`, `s3.tf`,
-`cloudfront.tf`, `functions/rewrite_index.js`, `waf.tf`, `acm.tf`, `iam_oidc.tf`,
-`outputs.tf`.
+`versions.tf` (providers + S3 backend), `providers.tf`, `variables.tf`,
+`locals.tf` (account-derived bucket names), `s3.tf`, `cloudfront.tf`,
+`functions/rewrite_index.js`, `waf.tf`, `acm.tf`, `iam_oidc.tf`, `outputs.tf`.
+
+The AWS account ID is never hardcoded. Deterministic bucket names are derived at
+runtime from `data.aws_caller_identity.current.account_id` (see `locals.tf`), and
+the state-bucket name is supplied through partial backend config (below).
 
 ## State backend
-Remote state in the pre-existing bucket `jhuk-tech-tfstate-877995959706`
+Remote state lives in the pre-existing bucket `jhuk-tech-tfstate-<accountid>`
 (key `jhuk/terraform.tfstate`, native S3 locking via `use_lockfile`). The bucket is
-created manually and is **not** managed by this code.
+created manually and is **not** managed by this code. Its name carries the account
+ID, so it is kept out of source: `versions.tf` omits `bucket` and you pass it via
+partial backend config. Copy the template and fill in your account ID:
+```sh
+cp backend.hcl.example backend.hcl   # backend.hcl is gitignored
+# edit backend.hcl -> bucket = "jhuk-tech-tfstate-<your-account-id>"
+```
 
 ## Usage
 ```sh
-terraform init                 # configures the S3 backend
-terraform plan                 # review — the maintainer applies, not Claude
-terraform apply                # maintainer only
+terraform init -backend-config=backend.hcl   # configures the S3 backend
+terraform plan                               # review — the maintainer applies, not Claude
+terraform apply                              # maintainer only
 ```
 For the certificate, read `terraform output acm_validation_records` and add the
 CNAME(s) at Namecheap; ACM then reports the cert `ISSUED` and CloudFront attaches it.
@@ -51,7 +61,7 @@ CNAME(s) at Namecheap; ACM then reports the cert `ISSUED` and CloudFront attache
 - **One OIDC provider per account.** An AWS account can have only one IAM OIDC
   provider for `token.actions.githubusercontent.com`. If one already exists, import
   it before apply to avoid `EntityAlreadyExists`:
-  `terraform import aws_iam_openid_connect_provider.github arn:aws:iam::877995959706:oidc-provider/token.actions.githubusercontent.com`
+  `terraform import aws_iam_openid_connect_provider.github arn:aws:iam::<ACCOUNT_ID>:oidc-provider/token.actions.githubusercontent.com`
 - The cert is validated by the Namecheap CNAME and attached to the distribution;
   the site serves on the custom domain `jhuk.tech`. The
   `aws_acm_certificate_validation` resource gates attachment on ACM reporting

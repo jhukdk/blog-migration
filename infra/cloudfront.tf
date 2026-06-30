@@ -1,6 +1,6 @@
 # Origin Access Control — lets CloudFront sign requests to the private S3 bucket.
 resource "aws_cloudfront_origin_access_control" "this" {
-  name                              = "${var.content_bucket_name}-oac"
+  name                              = "${local.content_bucket_name}-oac"
   description                       = "OAC for the jhuk.tech content bucket"
   origin_access_control_origin_type = "s3"
   signing_behavior                  = "always"
@@ -22,7 +22,7 @@ data "aws_cloudfront_cache_policy" "optimized" {
 }
 
 locals {
-  s3_origin_id = "s3-${var.content_bucket_name}"
+  s3_origin_id = "s3-${local.content_bucket_name}"
 }
 
 resource "aws_cloudfront_distribution" "this" {
@@ -47,7 +47,7 @@ resource "aws_cloudfront_distribution" "this" {
   # the other repo) — apply it first, or this apply fails. include_cookies=false:
   # this is a static site, cookies add nothing to the access logs.
   logging_config {
-    bucket          = "${var.cf_logs_bucket_name}.s3.amazonaws.com"
+    bucket          = "${local.cf_logs_bucket_name}.s3.amazonaws.com"
     include_cookies = false
     prefix          = "cloudfront/"
   }

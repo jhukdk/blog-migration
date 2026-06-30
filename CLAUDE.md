@@ -49,8 +49,10 @@ content and incremental infrastructure maintenance, not the cutover itself.
 - When unsure of an AWS provider argument, check current docs, don't guess.
 
 ## State backend (I create this bucket manually; do not create it in code)
-- Bucket: jhuk-tech-tfstate-877995959706 (us-east-1), versioning on,
-  S3 native locking (use_lockfile = true).
+- Bucket: jhuk-tech-tfstate-<ACCOUNT_ID> (us-east-1), versioning on,
+  S3 native locking (use_lockfile = true). The account ID is kept out of source:
+  the bucket name is passed via partial backend config (`backend.hcl`, gitignored;
+  see `infra/backend.hcl.example`) at `terraform init -backend-config=backend.hcl`.
 
   ## Hugo + Congo theme
 - The Hugo site lives in /site. Theme is Congo (jpanther/congo/v2), installed
