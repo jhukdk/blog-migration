@@ -1,7 +1,7 @@
 ---
-title: "Migrating my blog from WordPress to AWS using Github Terraform and Claude Code"
+title: "Migrating my blog from WordPress to AWS using Github and Terraform"
 date: 2026-06-15T12:00:00+00:00
-slug: "migrating-my-blog-from-wordpress-to-aws-using-github-terraform-and-claude-code"
+slug: "migrating-my-blog-from-wordpress-to-aws-using-github-and-terraform"
 categories: ["Writeup", "DevOps"]
 draft: false
 ---
@@ -56,10 +56,6 @@ That same function does double duty as the site's canonical-host guard: a reques
 The part I am most happy with is the deployment pipeline. A push to `main` that touches the site triggers a GitHub Actions workflow that builds Hugo (extended, with Go available to fetch the Congo module), syncs the output to S3, and invalidates the CloudFront cache.
 
 Crucially, it does all of this **without a single stored AWS credential.** The workflow uses **GitHub OIDC**: GitHub mints a short-lived identity token, AWS trusts it through an OIDC provider, and the pipeline assumes the least-privilege deploy role for the duration of the run. The trust policy is even scoped down to deploys from the `main` branch of this one repository. There is no access key to leak and nothing to rotate.
-
-## Working with Claude Code
-
-I leaned heavily on **Claude Code** to manage this migration end to end—drafting the Terraform, wiring up the OIDC trust, writing the conversion script, and keeping the whole thing on small, reviewable branches and pull requests. I kept the AWS guardrails explicit (I run every `terraform apply` myself; the agent only ever writes code and runs `terraform plan`), which turned out to be a productive way to move fast without handing over the keys to my infrastructure.
 
 ## The Roadmap Ahead
 

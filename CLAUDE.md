@@ -30,7 +30,9 @@ content and incremental infrastructure maintenance, not the cutover itself.
 - NEVER touch DNS records or nameservers. I handle all DNS manually.
 - The S3 content bucket stays PRIVATE; CloudFront reads it via OAC only.
   Never enable public access or S3 static-website hosting.
-- Preserve permalinks EXACTLY: `/:year/:month/:day/:slug/`. SEO depends on it.
+- Keep the permalink *pattern* `/:year/:month/:day/:slug/` (it drives the URL
+  structure). Individual post slugs MAY be changed at the author's discretion —
+  there is no requirement to preserve a post's original slug for SEO.
 - `www.jhuk.tech` 301-redirects to the apex `jhuk.tech` for one canonical host.
   That redirect AND the pretty-URL→`index.html` rewrite both live in the single
   CloudFront viewer-request function `infra/functions/rewrite_index.js`; only one
@@ -69,4 +71,5 @@ content and incremental infrastructure maintenance, not the cutover itself.
   [permalinks]
     posts = "/:year/:month/:day/:slug/"
 - Front matter must stay Congo-compatible (title, date, slug, tags, categories,
-  draft). Preserve each post's original slug exactly.
+  draft). A post's slug may be edited freely; preserving the original is not
+  required.
