@@ -11,7 +11,7 @@ Markdown (site/content) ──hugo build──▶ static HTML
                                           │
                           GitHub Actions (OIDC, no stored keys)
                                           │
-                         S3 sync ──▶ private S3 bucket ──OAC──▶ CloudFront ──▶ viewers
+                         S3 sync ──▶ private S3 bucket ──OAC──▶ CloudFront ──▶ WAFv2 ──▶ viewers
 ```
 
 - **Hugo static site** — source in [`/site`](site); posts are Markdown with front
@@ -27,14 +27,36 @@ Markdown (site/content) ──hugo build──▶ static HTML
 - **DNS** stays at Namecheap and now points at CloudFront (cutover complete). The ACM
   certificate is validated by a CNAME added manually at Namecheap; Route 53 is not used.
 
-Everything runs in **us-east-1** (required for the CloudFront ACM certificate).
+Everything runs in **us-east-1** (required for the CloudFront ACM certificate and
+the `CLOUDFRONT`-scoped WAFv2 web ACL).
+
+## Edge security — WAFv2
+
+A [WAFv2](https://docs.aws.amazon.com/waf/latest/developerguide/) web ACL is
+attached to the CloudFront distribution (`web_acl_id`), inspecting every
+viewer request at the edge before it reaches the origin. It is `CLOUDFRONT`-scoped,
+so — like the ACM certificate — it must live in **us-east-1**. The default action
+is **allow**; only the rules below block. All of it is Terraform in
+[`infra/waf.tf`](infra/waf.tf).
+
+| Priority | Rule | Action | Purpose |
+|---|---|---|---|
+| 0 | `DemoBlockByHeader` | Block | Blocks any request carrying the configured demo header (`curl -H "x-demo-block: blocked" https://jhuk.tech/` → `403`) — an on-demand way to demonstrate a WAF block. |
+| 1 | `AWSManagedRulesCommonRuleSet` | Managed | AWS-managed baseline protections against common exploit patterns and bad inputs; each managed rule keeps its own action. |
+| 2 | `RateLimitPerIP` | Block | Rate-based rule that blocks any single source IP exceeding the configured threshold within a 5-minute window. |
+
+The demo header name/value and the rate-limit threshold are Terraform variables
+(`waf_demo_block_header_name`, `waf_demo_block_header_value`, `waf_rate_limit`).
+Logging is enabled to a CloudWatch log group (`aws-waf-logs-jhuk-tech-cloudfront`,
+30-day retention), and CloudWatch metrics plus sampled requests are on for the web
+ACL and each rule.
 
 ## Repository layout
 
 | Path | Contents |
 |---|---|
 | [`site/`](site) | Hugo site — content, config (split layout in `config/_default/`), theme module |
-| [`infra/`](infra) | Terraform — `s3.tf`, `cloudfront.tf`, `acm.tf`, `iam_oidc.tf`, etc. ([details](infra/README.md)) |
+| [`infra/`](infra) | Terraform — `s3.tf`, `cloudfront.tf`, `waf.tf`, `acm.tf`, `iam_oidc.tf`, etc. ([details](infra/README.md)) |
 | [`.github/workflows/`](.github/workflows) | GitHub Actions deploy pipeline ([details](.github/workflows/README.md)) |
 | `migration-source/` | Exported WordPress content used as the migration source |
 | `scripts/` | Helper scripts for the migration |
