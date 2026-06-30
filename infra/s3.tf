@@ -1,7 +1,7 @@
 # Private S3 bucket holding the built Hugo site. It is NEVER public: CloudFront
 # reads it through Origin Access Control (OAC) only. No website hosting.
 resource "aws_s3_bucket" "content" {
-  bucket = var.content_bucket_name
+  bucket = local.content_bucket_name
 }
 
 # Block every avenue of public access.

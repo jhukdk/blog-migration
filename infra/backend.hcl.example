@@ -1,0 +1,4 @@
+# Partial backend configuration for the S3 state backend.
+# Copy to backend.hcl (gitignored) and fill in your real account ID, then run:
+#   terraform init -backend-config=backend.hcl
+bucket = "jhuk-tech-tfstate-<ACCOUNT_ID>"
