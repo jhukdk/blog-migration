@@ -29,7 +29,7 @@
 [[main]]
   name = "LinkedIn"
   title = "LinkedIn"
-  url = "https://www.linkedin.com/in/djkim1/"
+  url = "https://www.linkedin.com/in/jhuktech/"
   weight = 60
   [main.params]
     icon = "linkedin"
