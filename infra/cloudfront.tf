@@ -40,6 +40,18 @@ resource "aws_cloudfront_distribution" "this" {
   # names; derived from the same vars so aliases and cert SANs stay in lockstep.
   aliases = concat([var.domain_name], var.subject_alternative_names)
 
+  # Standard access logging → the logs bucket owned by the
+  # splunk-enterprise-integration repo, where Splunk ingests it. `bucket` here is
+  # the S3 bucket DOMAIN (bucket.s3.amazonaws.com), not the bare name. That bucket
+  # must already exist with ACLs enabled and the awslogsdelivery grant (handled in
+  # the other repo) — apply it first, or this apply fails. include_cookies=false:
+  # this is a static site, cookies add nothing to the access logs.
+  logging_config {
+    bucket          = "${var.cf_logs_bucket_name}.s3.amazonaws.com"
+    include_cookies = false
+    prefix          = "cloudfront/"
+  }
+
   origin {
     origin_id                = local.s3_origin_id
     domain_name              = aws_s3_bucket.content.bucket_regional_domain_name
