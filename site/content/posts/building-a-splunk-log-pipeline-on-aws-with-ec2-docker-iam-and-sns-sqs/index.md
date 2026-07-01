@@ -142,6 +142,8 @@ This is the heart of the ingestion design, and the pattern generalizes well beyo
 
 When CloudFront writes a new gzip log object, S3 emits an **ObjectCreated** event. That event publishes to an **SNS topic** (a publish/subscribe fan-out), which delivers to an **SQS queue** (a durable pull-based queue that Splunk polls).
 
+![The S3 logs bucket under the cloudfront/ prefix, holding the gzipped CloudFront access-log objects that each trigger an ObjectCreated notification](s3-cloudfront-access-logs.png)
+
 A reasonable question is why SNS sits in the middle rather than wiring S3 straight to SQS. The answer is **fan-out**: a single S3 event can later feed additional consumers — a WAF pipeline, a CloudTrail pipeline, an alerting Lambda — without ever touching the S3 configuration again. SNS is the seam that keeps the design extensible. The cost is one extra hop and two resource policies.
 
 Three engineering details make this production-shaped rather than a toy:
@@ -169,6 +171,8 @@ With the pipeline live, every request to the blog produces a CloudFront access-l
 - `x_edge_location` — which CloudFront edge served the request
 - `sc_bytes`, `time_taken` — response size and latency
 - `cs_user_agent`, `cs_referer` — client and referrer
+
+![Splunk Add-on for AWS Inputs page showing the active cloudfront-sqs-s3 SQS-Based S3 input writing to index=cloudfront with the aws:cloudfront:accesslogs source type](splunk-addon-cloudfront-sqs-input.png)
 
 That turns inert log files into questions I can answer in seconds:
 
