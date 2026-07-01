@@ -35,7 +35,7 @@ Splunk Enterprise runs on a single EC2 instance on Amazon Linux 2023. Two decisi
 
 **Instance sizing.** Splunk's reference specification is generous, but my ingest volume — the access logs of one low-traffic blog — is tiny. I started with the smallest instance that could comfortably run the container, treating size as a one-line variable I can raise later if search feels sluggish. A real-world constraint shaped the final choice: the AWS account is on the new **Free plan**, which refuses to launch any instance type that is not free-tier-eligible. That ruled out my first pick and pushed me to a free-tier-eligible instance that, as it happened, carries *more* memory than my original plan. Documenting that pivot matters more than hiding it: infrastructure work is full of constraints discovered at apply time, and the useful skill is adapting cleanly rather than pretending the first plan was perfect.
 
-**The instance is cattle, not a pet.** I configured the host so it can be destroyed and rebuilt at will. All bootstrapping happens in EC2 user-data — install Docker, mount storage, fetch secrets, run the container — and Terraform is set to *replace* the instance whenever that script changes. This is only safe because the actual state lives elsewhere, on a separate disk, which is the next decision.
+**The host is disposable by design.** I configured the instance so it can be destroyed and rebuilt at will. All bootstrapping happens in EC2 user-data — install Docker, mount storage, fetch secrets, run the container — and Terraform is set to *replace* the instance whenever that script changes. This is only safe because the actual state lives elsewhere, on a separate disk, which is the next decision.
 
 I also required **IMDSv2** on the instance. The instance metadata service is where the host's temporary credentials are delivered; forcing a session token closes the classic server-side request forgery path that has been used to steal those credentials through a vulnerable app.
 
@@ -48,7 +48,7 @@ The Splunk container's two important directories are bind-mounted onto that volu
 - `/opt/splunk/var` — the indexed event data
 - `/opt/splunk/etc` — all configuration: indexes, installed add-ons, and the ingestion input itself
 
-Because both live on EBS, the entire instance can be terminated and replaced and the data survives: the volume detaches from the dead instance and reattaches to the new one, and the bootstrap script mounts it (skipping the format step when it sees an existing filesystem). This is the whole reason to use EBS rather than the instance's ephemeral disk, and proving that data survives a full instance replacement is part of my definition of done.
+Because both live on EBS, the entire instance can be terminated and replaced and the data survives: the volume detaches from the dead instance and reattaches to the new one, and the bootstrap script mounts it (skipping the format step when it sees an existing filesystem). This is the whole reason to use EBS rather than the instance's ephemeral disk — and I got to verify it the unplanned way: a later Terraform change altered the bootstrap script, which triggered a full instance replacement mid-build. The old host was terminated, a new one came up, the volume reattached, and every index definition and indexed event was still there. The failure mode I was designing against became the test that proved the design.
 
 One concrete gotcha I had to handle: the official Splunk image runs as a specific non-root user (`uid 41812`), so the mounted directories have to be owned by that user or first-boot provisioning fails on permissions. The bootstrap script `chown`s them before starting the container.
 
@@ -187,7 +187,7 @@ index=cloudfront
 index=cloudfront | top limit=20 cs_uri_stem
 ```
 
-I can see which posts draw traffic, whether the edge cache is doing its job, where 404s come from, and which client IPs and user agents are hitting the site — including the steady background of bots and scanners that every public site attracts.
+I can see which posts draw traffic, whether the edge cache is doing its job, where 404s come from, and which client IPs and user agents are hitting the site — including the steady background of bots and scanners that every public site attracts. That background showed up in the very first batch of logs: a large share of the denied (`403`) requests were automated probes for paths like `/1ark.php` and `/wp-json/wp/v2/users` — scanners fishing for a vulnerable PHP or WordPress install on a site that runs neither. Within minutes of turning the pipeline on, inert log files had become a live feed of who was knocking and what they were looking for.
 
 ## What Comes Next
 
