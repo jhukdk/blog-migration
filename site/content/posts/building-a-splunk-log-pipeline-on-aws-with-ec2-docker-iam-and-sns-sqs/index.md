@@ -1,16 +1,16 @@
 ---
-title: "Building a Splunk Log Pipeline on AWS: EC2, Docker, IAM, and an SNS/SQS Ingestion Path"
+title: "Integrating Splunk Enterprise on AWS: EC2, Docker, IAM, and SNS/SQS Log Ingestion Pipeline"
 date: 2026-06-30T00:30:00+00:00
-slug: "building-a-splunk-log-pipeline-on-aws-with-ec2-docker-iam-and-sns-sqs"
+slug: "integrating-splunk-enterprise-on-AWS"
 tags: ["aws", "splunk", "terraform", "ec2", "docker", "iam", "sns", "sqs", "ebs", "security", "observability", "logging"]
 categories: ["DevOps", "Security"]
 showTableOfContents: true
 draft: false
 ---
 
-This blog already runs as a Hugo static site behind CloudFront, deployed by Terraform and GitHub Actions. The site works; what I could not yet do was *answer questions about it*. Who is requesting what? How often does CloudFront serve from cache versus reaching back to S3? Which paths return 404s? The edge was producing access logs, but they were sitting inert in object storage.
+My blog runs as a static S3 origin behind CloudFront, deployed by Terraform and GitHub Actions. The edge was producing access logs, but they were sitting inert in object storage. I could not yet answer questions and produce intelligence like: Who is requesting what? Why are certain clients requesting paths or filenames that result in 403 or 404? How often does CloudFront serve from cache versus reaching back to S3? 
 
-This post documents the system I built to fix that: a **Splunk Enterprise** instance, running in Docker on a dedicated EC2 host, that ingests the blog's CloudFront access logs through a notification-driven pull pipeline. It is provisioned entirely as Terraform infrastructure-as-code in a separate repository from the blog, and it holds **no static AWS credentials anywhere**. I will walk through each architectural decision and the reasoning behind it, because the *why* is the part worth reviewing.
+This post documents the system I built to fix that: a **Splunk Enterprise** instance, running in Docker on a dedicated EC2 host, that ingests the blog's CloudFront access logs through a notification-driven pull pipeline. It is provisioned entirely as Terraform infrastructure-as-code in a separate repository from the blog. It holds **no static AWS credentials anywhere**. I will walk through each architectural decision and the reasoning behind it, because the *why* is the part worth reviewing.
 
 ## The Architecture at a Glance
 
