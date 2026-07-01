@@ -29,32 +29,34 @@ flowchart LR
 
 The contract between the pieces is deliberate: **the SQS message is only a pointer** that says "a new log object landed." Splunk's *Splunk Add-on for AWS*, using its SQS-Based S3 input, reads that pointer, fetches the actual gzip log object from S3, parses it, and writes the events to a dedicated index. Decoupling notification from data transfer is what makes the design scale and recover cleanly: if Splunk is down for an hour, the pointers wait safely in the queue.
 
-## The EC2 Instance: A Deliberately Small, Disposable Host
+## Networking: A Custom VPC, Not the Default
 
-Splunk Enterprise runs on a single EC2 instance on Amazon Linux 2023. Two decisions here are worth justifying.
+I built a custom **VPC** (Virtual Private Cloud — my own isolated slice of the AWS network) rather than using the account's default, both for isolation and to make every networking component explicit. The pieces:
 
-**Instance sizing.** Splunk's reference specification is generous, but my ingest volume — the access logs of one low-traffic blog — is tiny. I started with the smallest instance that could comfortably run the container, treating size as a one-line variable I can raise later if search feels sluggish. A real-world constraint shaped the final choice: the AWS account is on the new **Free plan**, which refuses to launch any instance type that is not free-tier-eligible. That ruled out my first pick and pushed me to a free-tier-eligible instance that, as it happened, carries *more* memory than my original plan. Documenting that pivot matters more than hiding it: infrastructure work is full of constraints discovered at apply time, and the useful skill is adapting cleanly rather than pretending the first plan was perfect.
+- **Subnet** — a range of addresses within the VPC where the instance lives.
+- **Internet Gateway (IGW)** — the on-ramp between the VPC and the public internet. It does nothing until a route points at it.
+- **Route Table** — the signposts. A default route (`0.0.0.0/0 → IGW`) is what actually makes the subnet "public"; associating it with the subnet is the step that turns it on.
+- **Security Group (SG)** — a stateful firewall around the instance. It is default-deny inbound. I open exactly one port:
 
-**The host is disposable by design.** I configured the instance so it can be destroyed and rebuilt at will. All bootstrapping happens in EC2 user-data — install Docker, mount storage, fetch secrets, run the container — and Terraform is set to *replace* the instance whenever that script changes. This is only safe because the actual state lives elsewhere, on a separate disk, which is the next decision.
+```hcl
+# Inbound: Splunk Web (8000) from my IP only. No SSH (22) at all.
+ingress 8000/tcp  from admin_cidrs
+egress  all       to 0.0.0.0/0
+```
 
-I also required **IMDSv2** on the instance. The instance metadata service is where the host's temporary credentials are delivered; forcing a session token closes the classic server-side request forgery path that has been used to steal those credentials through a vulnerable app.
+Splunk's web UI (port 8000) is reachable only from my own IP, parameterized so it never lands hardcoded in the code. Egress is left open so the host can reach S3, SQS, SSM, and Docker Hub. For a single trusted host, locking inbound while allowing outbound is the right asymmetry.
 
-## EBS: Why Splunk's Data Lives on a Separate Disk
+## The EC2 Instance: A Small, Hardened Host
 
-If the instance is disposable, the indexed logs and Splunk's configuration cannot live on it. They live on a dedicated, encrypted **gp3 EBS volume** — a virtual disk attached to the instance, like an external SSD you can unplug from one machine and plug into another.
+Splunk Enterprise runs on a single EC2 instance on Amazon Linux 2023. Two decisions shape it.
 
-The Splunk container's two important directories are bind-mounted onto that volume:
+**Instance sizing.** Splunk's reference specification is generous, but my ingest volume — the access logs of one low-traffic blog — is tiny. I run it on an `m7i-flex.large`, sized modestly and treated as a one-line variable I can raise later if search feels sluggish.
 
-- `/opt/splunk/var` — the indexed event data
-- `/opt/splunk/etc` — all configuration: indexes, installed add-ons, and the ingestion input itself
+**IMDSv2 required.** The instance metadata service is where the host's temporary credentials are delivered; forcing a session token closes the classic server-side request forgery path that has been used to steal those credentials through a vulnerable app.
 
-Because both live on EBS, the entire instance can be terminated and replaced and the data survives: the volume detaches from the dead instance and reattaches to the new one, and the bootstrap script mounts it (skipping the format step when it sees an existing filesystem). This is the whole reason to use EBS rather than the instance's ephemeral disk — and I got to verify it the unplanned way: a later Terraform change altered the bootstrap script, which triggered a full instance replacement mid-build. The old host was terminated, a new one came up, the volume reattached, and every index definition and indexed event was still there. The failure mode I was designing against became the test that proved the design.
+## Docker: A Disposable Host Running Splunk in a Container
 
-One concrete gotcha I had to handle: the official Splunk image runs as a specific non-root user (`uid 41812`), so the mounted directories have to be owned by that user or first-boot provisioning fails on permissions. The bootstrap script `chown`s them before starting the container.
-
-## Docker: Running Splunk as a Container
-
-Rather than installing Splunk directly onto the OS, I run the official `splunk/splunk` image, pinned to a specific patch version for reproducible builds. Containerizing buys clean upgrades (change the tag, replace the container) and keeps the host itself almost stateless.
+The host is disposable by design — I can destroy and rebuild it at will. This is **immutable infrastructure**: I never patch a running instance in place; I replace it with a freshly-built one on every change. All bootstrapping happens in EC2 user-data (install Docker, mount the data volume, fetch secrets, run the container), and Terraform *replaces* the instance whenever that script changes. Rather than installing Splunk onto the OS, I run the official `splunk/splunk` image pinned to a specific patch version: containerizing keeps the host almost stateless and turns an upgrade into a tag change. This is only safe because the actual state lives elsewhere, on a separate disk — the next decision.
 
 The bootstrap runs roughly this:
 
@@ -69,7 +71,20 @@ docker run -d --name splunk --restart unless-stopped \
   splunk/splunk:10.2.4
 ```
 
-Two details earned their keep. First, Splunk 10.x added a *second* license-acceptance gate (`SPLUNK_GENERAL_TERMS`) on top of the older `SPLUNK_START_ARGS` flag; without it the container crash-loops on every boot with a "License not accepted" error. I discovered this the way you usually do — by watching the first deploy fail — and pinning a current major version is exactly the kind of change that surfaces such requirements. Second, the admin password is **never** written into the image, the Terraform code, or the state file.
+Two details earned their keep. First, Splunk 10.x added a *second* license-acceptance gate (`SPLUNK_GENERAL_TERMS`) on top of the older `SPLUNK_START_ARGS` flag; without it the container crash-loops on every boot with a "License not accepted" error. Second, the admin password is **never** written into the image, the Terraform code, or the state file.
+
+## EBS: Why Splunk's Data Lives on a Separate Disk
+
+If the instance is disposable, the indexed logs and Splunk's configuration cannot live on it. They live on a dedicated, encrypted **gp3 EBS volume** — a virtual disk attached to the instance, like an external SSD you can unplug from one machine and plug into another.
+
+The Splunk container's two important directories are bind-mounted onto that volume:
+
+- `/opt/splunk/var` — the indexed event data
+- `/opt/splunk/etc` — all configuration: indexes, installed add-ons, and the ingestion input itself
+
+Because both live on EBS, the entire instance can be terminated and replaced and the data survives: the volume detaches from the dead instance and reattaches to the new one, and the bootstrap script mounts it (skipping the format step when it sees an existing filesystem). This is the whole reason to use EBS rather than the instance's ephemeral disk — and I got to verify it the unplanned way: a later Terraform change altered the bootstrap script, which triggered a full instance replacement mid-build. The old host was terminated, a new one came up, the volume reattached, and every index definition and indexed event was still there. The failure mode I was designing against became the test that proved the design.
+
+One concrete gotcha I had to handle: the official Splunk image runs as a specific non-root user (`uid 41812`), so the mounted directories have to be owned by that user or first-boot provisioning fails on permissions. The bootstrap script `chown`s them before starting the container.
 
 ## Secrets: SSM Parameter Store, Fetched at Boot
 
@@ -120,23 +135,6 @@ There was one honest compromise. The Splunk add-on calls `sqs:ListQueues` when y
 ### Shell Access Without an Open Port
 
 Because the role carries SSM permissions, I get an interactive shell on the instance through **SSM Session Manager** — and port 22 stays closed to the internet entirely. There is no SSH key to manage or leak, and access is gated by IAM rather than by a key pair. This is strictly better than opening SSH to the world, and better even than locking SSH to my IP.
-
-## Networking: A Custom VPC, Not the Default
-
-I built a custom **VPC** (Virtual Private Cloud — my own isolated slice of the AWS network) rather than using the account's default, both for isolation and to make every networking component explicit. The pieces:
-
-- **Subnet** — a range of addresses within the VPC where the instance lives.
-- **Internet Gateway (IGW)** — the on-ramp between the VPC and the public internet. It does nothing until a route points at it.
-- **Route Table** — the signposts. A default route (`0.0.0.0/0 → IGW`) is what actually makes the subnet "public"; associating it with the subnet is the step that turns it on.
-- **Security Group (SG)** — a stateful firewall around the instance. It is default-deny inbound. I open exactly one port:
-
-```hcl
-# Inbound: Splunk Web (8000) from my IP only. No SSH (22) at all.
-ingress 8000/tcp  from admin_cidrs
-egress  all       to 0.0.0.0/0
-```
-
-Splunk's web UI (port 8000) is reachable only from my own IP, parameterized so it never lands hardcoded in the code. Egress is left open so the host can reach S3, SQS, SSM, and Docker Hub. For a single trusted host, locking inbound while allowing outbound is the right asymmetry.
 
 ## SNS and SQS: The Notification-Driven Pull Pattern
 
