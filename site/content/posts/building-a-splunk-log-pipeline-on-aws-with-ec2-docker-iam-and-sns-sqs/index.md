@@ -1,7 +1,7 @@
 ---
 title: "Integrating Splunk Enterprise on AWS: EC2, Docker, IAM, and SNS/SQS Log Ingestion Pipeline"
 date: 2026-06-30T00:30:00+00:00
-slug: "integrating-splunk-enterprise-on-AWS"
+slug: "integrating-splunk-enterprise-on-aws"
 tags: ["aws", "splunk", "terraform", "ec2", "docker", "iam", "sns", "sqs", "ebs", "security", "observability", "logging"]
 categories: ["DevOps", "Security"]
 showTableOfContents: true
