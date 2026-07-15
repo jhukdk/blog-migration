@@ -30,16 +30,14 @@ function redirect301(location) {
 
 function handler(event) {
     var request = event.request;
-
-    // --- Canonical host redirect (must run before any URI rewriting) ---
     var host = request.headers.host.value;
-    if (host === 'www.jhuk.tech') {
-        return redirect301('https://jhuk.tech' + request.uri + buildQueryString(request.querystring));
-    }
 
-    // --- Landing-page redirect: the site root goes straight to the post list ---
-    if (request.uri === '/') {
-        return redirect301('https://jhuk.tech/posts/' + buildQueryString(request.querystring));
+    // --- Canonical host + landing-page redirects ---
+    // The landing page goes to the post list; resolving the target path first
+    // collapses www root -> apex /posts/ into a single 301.
+    var target = request.uri === '/' ? '/posts/' : request.uri;
+    if (host === 'www.jhuk.tech' || target !== request.uri) {
+        return redirect301('https://jhuk.tech' + target + buildQueryString(request.querystring));
     }
 
     // --- Pretty-URL rewrite ---
